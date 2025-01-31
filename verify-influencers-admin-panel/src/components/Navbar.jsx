@@ -28,9 +28,11 @@ function Navbar() {
   const isAuthPage = authPages.includes(location.pathname);
 
   const loggedInNav = [
+    {name:"Dashboard", path:"dashboard"},
     { name: "Leaderboard", path: "/leaderboard" },
     { name: "About", path: "/about" },
     { name: "Profile", path: "/profile" },
+    
   ];
 
   return (
