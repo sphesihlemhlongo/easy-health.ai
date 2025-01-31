@@ -1,19 +1,70 @@
 // src/components/Navbar.jsx
 import React from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
+import { supabase } from "../supabaseClient";
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
-const Navbar = () => {
+function Navbar() {
+  const [user, setUser] = useState(null);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    getUser();
+  }, []);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    navigate("/login");
+  };
+
+  // Define navigation links
+  const authPages = ["/login", "/register"];
+  const isAuthPage = authPages.includes(location.pathname);
+
+  const loggedInNav = [
+    { name: "Leaderboard", path: "/leaderboard" },
+    { name: "About", path: "/about" },
+    { name: "Profile", path: "/profile" },
+  ];
+
   return (
-    <nav className="p-4 bg-gray-900 text-white flex justify-between items-center">
-      <h1 className="text-xl font-bold">EasyHealth</h1>
-      <div>
-        <Link className="mx-2" to="/">Home</Link>
-        <Link className="mx-2" to="/leaderboard">Leaderboard</Link>
-        <Link className="mx-2" to="/influencers">Influencers</Link>
-        <Link className="mx-2" to="/dashboard">Dashboard</Link>
+    <nav className="bg-blue-600 text-white p-4 shadow-md">
+      <div className="container mx-auto flex justify-between items-center">
+        <Link to="/" className="text-xl font-bold">
+          Health Claim Verifier
+        </Link>
+
+        <div className="space-x-4">
+          {isAuthPage ? (
+            <>
+              <Link to="/register" className="hover:underline">Register</Link>
+              <Link to="/login" className="hover:underline">Login</Link>
+            </>
+          ) : user ? (
+            <>
+              {loggedInNav.map((item) => (
+                <Link key={item.path} to={item.path} className="hover:underline">
+                  {item.name}
+                </Link>
+              ))}
+              <button
+                onClick={handleLogout}
+                className="bg-red-500 px-4 py-2 rounded-lg hover:bg-red-600"
+              >
+                Sign Out
+              </button>
+            </>
+          ) : null}
+        </div>
       </div>
     </nav>
   );
-};
+}
 
 export default Navbar;

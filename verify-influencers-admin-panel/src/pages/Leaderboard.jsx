@@ -1,13 +1,13 @@
 // src/pages/Leaderboard.jsx
 import React from "react";
 
-const Leaderboard = () => {
+function Leaderboard() {
   return (
-    <div className="p-6 text-center">
-      <h2 className="text-2xl font-bold">Leaderboard</h2>
-      <p>Coming soon...</p>
+    <div className="flex flex-col items-center justify-center min-h-screen">
+      <h1 className="text-3xl font-bold">Leaderboard</h1>
+      <p className="text-gray-700 mt-2">View trusted influencers here.</p>
     </div>
   );
-};
+}
 
 export default Leaderboard;
