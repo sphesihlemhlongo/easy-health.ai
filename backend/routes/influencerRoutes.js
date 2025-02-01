@@ -1,75 +1,41 @@
 import express from "express";
-import { getInfluencers, addInfluencer } from "../controllers/influencerController.js";
-import { searchHealthInfluencers } from "../services/perplexityService.js";
 import { db } from "../config/db.js";
 
 const router = express.Router();
 
-// @route   GET /api/influencers
-// @desc    Get all influencers
-router.get("/", getInfluencers);
+// Fetch all influencers
+router.get("/", async (req, res) => {
+  try {
+    const influencers = await db("influencers").select("*");
+    res.json(influencers);
+  } catch (error) {
+    console.error("Error fetching influencers:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
 
-// @route   POST /api/influencers
-// @desc    Add a new influencer
-router.post("/", addInfluencer);
+// Fetch a specific influencer's details
+router.get("/:id", async (req, res) => {
+  const { id } = req.params;
+  try {
+    const influencer = await db("influencers").where({ id }).first();
+    if (!influencer) {
+      return res.status(404).json({ error: "Influencer not found" });
+    }
 
-// Fetch & Store Influencers and Claims
-router.post("/search", async (req, res) => {
-    const { searchQuery } = req.body;
-  
-    if (!searchQuery) {
-      return res.status(400).json({ error: "Search query is required" });
-    }
-  
-    try {
-      // Fetch influencers & claims from Perplexity
-      const perplexityData = await searchHealthInfluencers(
-        `Find health influencers and their claims about ${searchQuery}`
-      );
-  
-      if (!perplexityData || !perplexityData.choices) {
-        return res.status(500).json({ error: "No data received from Perplexity" });
-      }
-  
-      const influencers = [];
-  
-      for (const choice of perplexityData.choices) {
-        const content = choice.message.content; // Extract claim text
-        const imageUrl = choice.message.image; // Profile picture (if available)
-        const influencerName = content.split(" ")[0]; // Extract name (simplified)
-  
-        // Store influencer if not exists
-        const [influencer] = await db("influencers")
-          .select("*")
-          .where({ name: influencerName });
-  
-        let influencerId;
-        if (!influencer) {
-          const [newInfluencer] = await db("influencers").insert(
-            { name: influencerName, platform: "Perplexity", image_url: imageUrl },
-            ["id"]
-          );
-          influencerId = newInfluencer.id;
-        } else {
-          influencerId = influencer.id;
-        }
-  
-        // Store claim
-        await db("claims").insert({
-          influencer_id: influencerId,
-          claim_text: content,
-          category: searchQuery,
-          status: "Unverified",
-        });
-  
-        influencers.push({ name: influencerName, content, imageUrl });
-      }
-  
-      res.json({ success: true, influencers });
-    } catch (error) {
-      console.error("Error processing influencer data:", error);
-      res.status(500).json({ error: "Internal server error" });
-    }
-  });
-  
-  export default router;
+    // Get all claims associated with the influencer
+    const claims = await db("claims").where({ influencer_id: id });
+
+    // Calculate trust score (simple ratio of verified claims)
+    const verifiedClaims = claims.filter((c) => c.status === "Verified").length;
+    const totalClaims = claims.length;
+    const trustScore = totalClaims > 0 ? (verifiedClaims / totalClaims) * 100 : 0;
+
+    res.json({ influencer, claims, trustScore: trustScore.toFixed(2) });
+  } catch (error) {
+    console.error("Error fetching influencer details:", error);
+    res.status(500).json({ error: "Server error" });
+  }
+});
+
+export default router;

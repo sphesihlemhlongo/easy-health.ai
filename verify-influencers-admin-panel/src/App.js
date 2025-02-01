@@ -10,6 +10,7 @@ import Home from "./pages/Home";
 import Leaderboard from "./pages/Leaderboard";
 import About from "./pages/About";
 import Profile from "./pages/Profile";
+import InfluencerDetails from "./pages/InfluencerDetails";
 
 function App() {
   return (
@@ -24,6 +25,7 @@ function App() {
           <Route path="/leaderboard" element={<Leaderboard />} />
           <Route path="/about" element={<About />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/influencers/:id" element={<InfluencerDetails />} />
         </Routes>
       </div>
       <Footer />
