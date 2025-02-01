@@ -34,3 +34,16 @@ export const removeDuplicateClaims = (claims) => {
     return Array.from(uniqueClaims);
   };
   
+export const formatClaims = (tweets, podcasts) => {
+    let claims = [];
+
+    tweets.forEach(tweet => {
+        claims.push({ source: "Twitter", text: tweet.text, influencer: tweet.author, verified: false });
+    });
+
+    podcasts.forEach(podcast => {
+        claims.push({ source: "Podcast", text: podcast.transcript, influencer: podcast.host, verified: false });
+    });
+
+    return claims;
+};

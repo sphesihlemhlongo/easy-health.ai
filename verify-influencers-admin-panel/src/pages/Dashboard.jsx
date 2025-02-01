@@ -1,56 +1,54 @@
-import { useEffect, useState } from 'react';
-import { supabase } from '../supabaseClient';
+import React, { useEffect,useState } from "react";
+import Button from '../components/Button';
+import { supabase } from "../supabaseClient";
+
+import { fetchInfluencers, searchInfluencers } from "../api/api.jsx";
 
 const Dashboard = () => {
   const [influencers, setInfluencers] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
-    const fetchInfluencers = async () => {
-      const { data, error } = await supabase.from('influencers').select('*');
-      if (error) {
-        console.error('Error fetching influencers:', error);
-      } else {
-        setInfluencers(data);
-      }
+    const loadData = async () => {
+      const influencerData = await fetchInfluencers();
+      setInfluencers(influencerData);
     };
-    fetchInfluencers();
+    loadData();
   }, []);
 
   const handleSearch = async () => {
-    const { data, error } = await supabase
-      .from('influencers')
-      .select('*')
-      .or(`name.ilike.%${searchTerm}%,topic.ilike.%${searchTerm}%,claims.ilike.%${searchTerm}%`);
-    
-    if (error) {
-      console.error('Error searching influencers:', error);
-    } else {
-      setInfluencers(data);
+    if (!search.trim()) return;
+    const result = await searchInfluencers(search);
+    if (result.success) {
+      setInfluencers([...influencers, ...result.influencers]);
     }
   };
 
   return (
-    <div className="container mx-auto p-4">
-      <input
-        type="text"
-        placeholder="Search by influencer, topic, or medical condition"
-        value={searchTerm}
-        onChange={(e) => setSearchTerm(e.target.value)}
-        className="border p-2 w-full rounded-md"
-      />
-      <button
-        onClick={handleSearch}
-        className="bg-blue-500 text-white p-2 rounded mt-2"
-      >
-        Search
-      </button>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
-        {influencers.map((influencer) => (
-          <div key={influencer.id} className="border p-4 rounded-md shadow-md">
-            <h2 className="text-lg font-bold">{influencer.name}</h2>
-            <p className="text-gray-600">Topic: {influencer.topic}</p>
-            <p className="text-gray-800">Claims: {influencer.claims}</p>
+    <div className="p-6">
+      <h1 className="text-3xl font-bold mb-4">Health Claim Tracker</h1>
+
+      {/* Search Input */}
+      <div className="mb-4 flex">
+        <input
+          type="text"
+          placeholder="Search for health influencers & claims..."
+          className="border p-2 flex-grow"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
+        <button className="bg-blue-600 text-white px-4 py-2" onClick={handleSearch}>
+          Search
+        </button>
+      </div>
+
+      {/* Display Influencers */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {influencers.map((inf) => (
+          <div key={inf.name} className="p-4 border rounded-lg shadow-lg bg-white">
+            <img src={inf.imageUrl || "/default-avatar.png"} alt={inf.name} className="w-20 h-20 rounded-full mx-auto mb-2" />
+            <h2 className="text-xl font-semibold text-center">{inf.name}</h2>
+            <p className="text-gray-600 text-center">Claim: {inf.content}</p>
           </div>
         ))}
       </div>

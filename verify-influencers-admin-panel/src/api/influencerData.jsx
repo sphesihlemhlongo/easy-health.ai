@@ -39,5 +39,3 @@ export const fetchInfluencers = async () => {
     return data;
   };
 
-console.log("Fetched Tweets:", tweets);
-console.log("Fetched Podcast Transcripts:", podcasts);

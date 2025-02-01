@@ -1,59 +1,31 @@
-const axios = require("axios");
-const supabase = require("../db");
-const { fetchPerplexityData, verifyWithOpenAI } = require("../services");
+import { supabase } from "../config/db.js";
 
-exports.getInfluencerData = async (req, res) => {
-  const { handle } = req.params;
+// @desc    Get all influencers
+// @route   GET /api/influencers
+export const getInfluencers = async (req, res) => {
   try {
-    const data = await fetchPerplexityData(handle);
-    res.json(data);
+    let { data, error } = await supabase.from("influencers").select("*");
+
+    if (error) throw error;
+    res.status(200).json(data);
   } catch (error) {
-    res.status(500).json({ error: "Error fetching influencer data" });
+    res.status(500).json({ message: "Error fetching influencers", error: error.message });
   }
 };
 
-exports.extractClaims = async (req, res) => {
-    const { content } = req.body;
-    try {
-      const response = await axios.post(
-        "https://api.openai.com/v1/chat/completions",
-        {
-          model: "gpt-4",
-          messages: [{ role: "user", content: `Extract health claims: ${content}` }],
-        },
-        { headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}` } }
-      );
-  
-      const claims = response.data.choices[0].message.content.split("\n");
-      res.json({ claims });
-    } catch (error) {
-      res.status(500).json({ error: "Error extracting claims" });
-    }
+// @desc    Add a new influencer
+// @route   POST /api/influencers
+export const addInfluencer = async (req, res) => {
+  try {
+    const { name, platform, healthClaims, category } = req.body;
+
+    let { data, error } = await supabase.from("influencers").insert([
+      { name, platform, healthClaims, category }
+    ]);
+
+    if (error) throw error;
+    res.status(201).json(data);
+  } catch (error) {
+    res.status(500).json({ message: "Error adding influencer", error: error.message });
+  }
 };
-
-exports.verifyClaims = async (req, res) => {
-    const { claims } = req.body;
-    try {
-      const results = await verifyWithOpenAI(claims);
-      res.json(results);
-    } catch (error) {
-      res.status(500).json({ error: "Error verifying claims" });
-    }
- };
-
-exports.getLeaderboard = async (req, res) => {
-    try {
-      const { data, error } = await supabase
-        .from("influencers")
-        .select("name, trust_score, follower_count, claim_stats")
-        .order("trust_score", { ascending: false });
-  
-      if (error) throw error;
-      res.json(data);
-    } catch (error) {
-      res.status(500).json({ error: "Error fetching leaderboard data" });
-    }
-  };
-  
-
-  
