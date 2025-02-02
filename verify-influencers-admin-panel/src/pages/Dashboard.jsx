@@ -1,6 +1,6 @@
 import React, { useEffect,useState } from "react";
-import Button from '../components/Button';
-import { supabase } from "../supabaseClient";
+// import Button from '../components/Button';
+// import { supabase } from "../supabaseClient";
 
 import { fetchInfluencers } from "../api/api";
 import { useNavigate } from "react-router-dom";
