@@ -3,11 +3,14 @@ const API_BASE_URL = "http://localhost:5000/api"; // Adjust if deployed
 // Fetch all influencers
 export const fetchInfluencers = async () => {
     try {
-      const response = await fetch(`${API_BASE_URL}/influencers`);
-      return response.json();
+      const response = await fetch("http://localhost:5000/api/influencers"); // Adjust backend URL if needed
+      const data = await response.json();
+      
+      // Ensure data is always an array
+      return Array.isArray(data) ? data : [];
     } catch (error) {
       console.error("Error fetching influencers:", error);
-      return [];
+      return []; // Return empty array on error
     }
   };
 

@@ -1,32 +1,54 @@
 import express from "express";
-import { db } from "../config/db.js";
+import { supabase } from "../config/db.js";
 
 const router = express.Router();
 
 // Fetch all influencers
 router.get("/", async (req, res) => {
-  try {
-    const influencers = await db("influencers").select("*");
-    res.json(influencers);
-  } catch (error) {
-    console.error("Error fetching influencers:", error);
-    res.status(500).json({ error: "Server error" });
-  }
-});
-
+    try {
+      const { data: influencers, error } = await supabase.from("influencers").select("*");
+  
+      if (error) {
+        console.error("Supabase Error:", error);
+        return res.status(500).json({ error: "Database error" });
+      }
+  
+      console.log("Influencers fetched:", influencers); // 🔍 Debugging output
+  
+      res.json(influencers);
+    } catch (error) {
+      console.error("Error fetching influencers:", error);
+      res.status(500).json({ error: "Server error" });
+    }
+  });
+  
 // Fetch a specific influencer's details
 router.get("/:id", async (req, res) => {
   const { id } = req.params;
+
   try {
-    const influencer = await db("influencers").where({ id }).first();
-    if (!influencer) {
+    // Fetch influencer details
+    const { data: influencer, error: influencerError } = await supabase
+      .from("influencers")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (influencerError || !influencer) {
       return res.status(404).json({ error: "Influencer not found" });
     }
 
-    // Get all claims associated with the influencer
-    const claims = await db("claims").where({ influencer_id: id });
+    // Fetch claims for the influencer
+    const { data: claims, error: claimsError } = await supabase
+      .from("claims")
+      .select("*")
+      .eq("influencer_id", id);
 
-    // Calculate trust score (simple ratio of verified claims)
+    if (claimsError) {
+      throw claimsError;
+    }
+
+    // Calculate trust score
     const verifiedClaims = claims.filter((c) => c.status === "Verified").length;
     const totalClaims = claims.length;
     const trustScore = totalClaims > 0 ? (verifiedClaims / totalClaims) * 100 : 0;
