@@ -1,9 +1,9 @@
-const API_BASE_URL = "http://easy-healthai-production.up.railway.app/api"; // Adjust if deployed
+const API_BASE_URL = "https://easy-healthai-production.up.railway.app/api"; // Adjust if deployed
 
 // Fetch all influencers
 export const fetchInfluencers = async () => {
     try {
-      const response = await fetch("http://easy-healthai-production.up.railway.app/api/influencers"); // Adjust backend URL if needed
+      const response = await fetch("https://easy-healthai-production.up.railway.app//api/influencers"); // Adjust backend URL if needed
       const data = await response.json();
       
       // Ensure data is always an array
